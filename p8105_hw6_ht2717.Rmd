@@ -148,6 +148,7 @@ boot_results |>
   )
 
 ```
+
 The bootstrap distribution of r² ppears nearly symmetric and resembles a tight, bell-shaped curve centered close to 0.94. The variability is minimal, with most estimates falling within a narrow band from about 0.936 to 0.947. This pattern suggests that the regression model—predicting tmax from tmin and prcp—provides a consistently high level of explanatory power across resampled datasets. The limited spread indicates that the model’s ability to account for variation in tmax is highly stable and only weakly influenced by random sampling differences.
 
 
@@ -164,6 +165,7 @@ boot_results |>
   )
 
 ```
+
 In contrast to the behavior of the R-squared statistic, the bootstrap distribution of the coefficient ratio “beta1 divided by beta2” (that is, the coefficient for tmin divided by the coefficient for prcp) is highly uneven and strongly right-skewed, with a long tail extending toward large negative values. Most bootstrap estimates fall between roughly negative 250 and negative 150, but the presence of extreme outliers shows that this ratio is quite unstable. This instability occurs because the denominator in the ratio (the precipitation coefficient) is often very close to zero; even very small changes in that coefficient can produce large swings in the ratio, amplifying random noise and creating a highly variable distribution.
 
 Overall, the bootstrap results indicate that the R-squared statistic has a tight and well-behaved distribution, whereas the ratio “beta1 divided by beta2” is extremely sensitive and unstable, reflecting the difficulty of interpreting a ratio whose denominator is close to zero.
@@ -222,6 +224,8 @@ birth_df |>
   )
 
 ```
+
+
 Regression model:
 To construct a regression model for birthweight, I selected predictors based on biological reasoning and prior knowledge about factors that influence fetal growth. Birthweight is determined by a combination of fetal size at delivery, gestational maturity, maternal physical characteristics, and prenatal exposures. Guided by these considerations, I included the following variables:
 
@@ -238,6 +242,10 @@ Behavioral exposures: average number of cigarettes smoked during pregnancy (smok
 Infant sex: babysex, since male infants typically have slightly higher birthweights
 
 This modeling strategy reflects a hypothesis-driven approach rather than an automated selection method. The intention was to incorporate predictors with well-established relevance to birthweight while maintaining a model structure that remains interpretable and avoids unnecessary complexity from interactions or higher-order terms.
+
+
+
+
 
 Residual Plot:
 The residuals-versus-fitted plot indicates that the residuals are generally centered around zero throughout the entire range of predicted birthweights, suggesting that the model does not show meaningful systematic bias. There is no noticeable curvature or structured pattern in the points, which supports the appropriateness of a linear form for modeling the relationship between the predictors and birthweight.
