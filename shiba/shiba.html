@@ -1,0 +1,355 @@
+<title>捏捏柴</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+<style>
+/* Layout: one full-screen tatami room; a slim header with a squish counter, the shiba roams the mat below. */
+:root {
+  --bg: #f3efe2;
+  --mat: #dfe6c4;
+  --mat-line: #c9d3a6;
+  --mat-edge: #6f7f4a;
+  --ink: #3b3226;
+  --muted: #7a7060;
+  --accent: #e2802f;
+  --chip: #fffaf0;
+  --print: rgba(120, 90, 50, .22);
+  --bubble: #ffffff;
+  /* shiba colors read on both floors */
+  --fur: #e8a052;
+  --fur-dark: #c97b33;
+  --cream: #fff4e2;
+  --pink: #f6a7a0;
+  --eye: #2a211a;
+  --font-display: "ZCOOL KuaiLe", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-body: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d1f1a; --mat: #2c3226; --mat-line: #363e2e; --mat-edge: #8a9a62;
+    --ink: #f1ead8; --muted: #b0a890; --chip: #2a2c25; --print: rgba(255, 220, 170, .14);
+    --bubble: #fffaf0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d1f1a; --mat: #2c3226; --mat-line: #363e2e; --mat-edge: #8a9a62;
+  --ink: #f1ead8; --muted: #b0a890; --chip: #2a2c25; --print: rgba(255, 220, 170, .14);
+  --bubble: #fffaf0; color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden; user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.app {
+  height: 100%; display: flex; flex-direction: column; gap: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px 16px; box-sizing: border-box;
+}
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(26px, 5vw, 36px); margin: 0; line-height: 1; }
+h1 span { color: var(--accent); }
+.hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+.count {
+  font-family: var(--font-display); background: var(--chip); border: 2px solid var(--mat-edge);
+  border-radius: 999px; padding: 6px 14px; font-size: 16px; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.count b { color: var(--accent); font-weight: 400; font-size: 20px; }
+
+#stage {
+  position: relative; flex: 1; min-height: 0; border-radius: 18px; overflow: hidden;
+  border: 6px solid var(--mat-edge); cursor: pointer; touch-action: none;
+  background-color: var(--mat);
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 5px, var(--mat-line) 5px 6px),
+    linear-gradient(90deg, transparent calc(50% - 3px), var(--mat-edge) calc(50% - 3px) calc(50% + 3px), transparent calc(50% + 3px));
+  background-size: 6px 100%, 100% 100%;
+  opacity: .999;
+}
+
+.print {
+  position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; pointer-events: none;
+  animation: fade 2.4s ease-out forwards;
+}
+.print svg { width: 100%; height: 100%; display: block; fill: var(--print); }
+@keyframes fade { 0% { opacity: 1 } 70% { opacity: .8 } 100% { opacity: 0 } }
+
+.target {
+  position: absolute; width: 34px; height: 14px; margin: -7px 0 0 -17px; border-radius: 50%;
+  border: 2px dashed var(--accent); pointer-events: none; animation: ping .6s ease-out forwards;
+}
+@keyframes ping { from { transform: scale(.4); opacity: 1 } to { transform: scale(1.4); opacity: 0 } }
+
+#dog {
+  position: absolute; left: 0; top: 0; width: var(--dog-w); height: calc(var(--dog-w) * .9);
+  --dog-w: clamp(110px, 28vmin, 170px);
+  cursor: grab; outline: none; will-change: transform;
+}
+#dog.dragging { cursor: grabbing; }
+#dog:focus-visible .squish { filter: drop-shadow(0 0 0 var(--accent)) drop-shadow(0 0 6px var(--accent)); }
+#dog .shadow {
+  position: absolute; left: 12%; right: 12%; bottom: -6%; height: 14%; border-radius: 50%;
+  background: rgba(40, 30, 10, .18);
+}
+#dog .hop, #dog .squish { position: absolute; inset: 0; transform-origin: 50% 100%; }
+#dog svg { width: 100%; height: 100%; display: block; overflow: visible; }
+#dog .flip { transform-origin: 100px 90px; transition: transform .15s; }
+#dog.left .flip { transform: scaleX(-1); }
+
+.tail { transform-origin: 158px 128px; animation: wag .5s ease-in-out infinite alternate; }
+#dog.happy .tail { animation-duration: .18s; }
+@keyframes wag { from { transform: rotate(-14deg) } to { transform: rotate(12deg) } }
+
+.eyes-closed, .mouth-open { display: none; }
+#dog.pressed .eyes-open, #dog.pressed .mouth-shut { display: none; }
+#dog.pressed .eyes-closed, #dog.pressed .mouth-open { display: inline; }
+.eyes-open ellipse { transform-box: fill-box; transform-origin: center; transition: transform .08s; }
+#dog.blink .eyes-open ellipse.pupil { transform: scaleY(.12); }
+.blush { transition: opacity .2s; opacity: .55; }
+#dog.pressed .blush { opacity: 1; }
+
+.bubble {
+  position: absolute; pointer-events: none; font-family: var(--font-display); color: #3b3226;
+  background: var(--bubble); border: 2px solid #3b3226; border-radius: 14px; padding: 4px 10px;
+  font-size: 18px; white-space: nowrap; transform: translate(-50%, -100%);
+  animation: pop 1.1s ease-out forwards;
+}
+@keyframes pop {
+  0% { opacity: 0; margin-top: 6px; } 15% { opacity: 1; margin-top: -4px; }
+  75% { opacity: 1; } 100% { opacity: 0; margin-top: -26px; }
+}
+.heart {
+  position: absolute; pointer-events: none; color: #f07a8a; font-size: 18px;
+  animation: float 1s ease-out forwards;
+}
+@keyframes float { from { opacity: 1; transform: translate(0, 0) scale(.6) } to { opacity: 0; transform: translate(var(--dx), -70px) scale(1.2) } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tail { animation: none; }
+  .print, .target, .heart, .bubble { animation-duration: .01s; }
+}
+</style>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>捏捏<span>柴</span></h1>
+      <p class="hint">点地板让它跑过去 · 按住它捏一捏 · 拖着它走 · 键盘方向键也能动</p>
+    </div>
+    <div class="count" aria-live="polite">已经捏了 <b id="n">0</b> 下</div>
+  </header>
+
+  <main id="stage" aria-label="榻榻米地板，点击任意位置让柴犬跑过去">
+    <div id="dog" role="button" tabindex="0" aria-label="柴犬，按住捏一捏">
+      <div class="shadow"></div>
+      <div class="hop">
+        <div class="squish">
+          <svg viewBox="0 0 200 180" aria-hidden="true">
+            <g class="flip">
+              <!-- tail -->
+              <g class="tail">
+                <path d="M150 128 C196 120 198 66 168 66 C146 66 150 96 170 92" fill="none" stroke="var(--fur)" stroke-width="18" stroke-linecap="round"/>
+                <path d="M168 66 C152 67 154 90 170 92" fill="none" stroke="var(--cream)" stroke-width="8" stroke-linecap="round"/>
+              </g>
+              <!-- ears -->
+              <path d="M40 82 L52 24 L88 60 Z" fill="var(--fur)" stroke="var(--fur)" stroke-width="12" stroke-linejoin="round"/>
+              <path d="M160 82 L148 24 L112 60 Z" fill="var(--fur)" stroke="var(--fur)" stroke-width="12" stroke-linejoin="round"/>
+              <path d="M52 70 L57 40 L76 60 Z" fill="var(--pink)" stroke="var(--pink)" stroke-width="5" stroke-linejoin="round"/>
+              <path d="M148 70 L143 40 L124 60 Z" fill="var(--pink)" stroke="var(--pink)" stroke-width="5" stroke-linejoin="round"/>
+              <!-- mochi body -->
+              <ellipse cx="100" cy="114" rx="82" ry="62" fill="var(--fur)"/>
+              <ellipse cx="100" cy="148" rx="58" ry="30" fill="var(--cream)"/>
+              <ellipse cx="100" cy="112" rx="46" ry="30" fill="var(--cream)"/>
+              <!-- white eyebrow spots -->
+              <ellipse cx="72" cy="72" rx="7" ry="4.5" fill="var(--cream)"/>
+              <ellipse cx="128" cy="72" rx="7" ry="4.5" fill="var(--cream)"/>
+              <!-- eyes -->
+              <g class="eyes-open">
+                <ellipse class="pupil" cx="75" cy="90" rx="6.5" ry="7.5" fill="var(--eye)"/>
+                <ellipse class="pupil" cx="125" cy="90" rx="6.5" ry="7.5" fill="var(--eye)"/>
+                <circle cx="77.5" cy="87" r="2.2" fill="#fff"/>
+                <circle cx="127.5" cy="87" r="2.2" fill="#fff"/>
+              </g>
+              <g class="eyes-closed" fill="none" stroke="var(--eye)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M68 84 L80 90 L68 96"/>
+                <path d="M132 84 L120 90 L132 96"/>
+              </g>
+              <!-- blush -->
+              <ellipse class="blush" cx="58" cy="108" rx="11" ry="6.5" fill="var(--pink)"/>
+              <ellipse class="blush" cx="142" cy="108" rx="11" ry="6.5" fill="var(--pink)"/>
+              <!-- nose + mouth -->
+              <ellipse cx="100" cy="100" rx="7" ry="5" fill="var(--eye)"/>
+              <path class="mouth-shut" d="M90 108 Q95 115 100 108 Q105 115 110 108" fill="none" stroke="var(--eye)" stroke-width="3" stroke-linecap="round"/>
+              <g class="mouth-open">
+                <path d="M90 107 Q100 128 110 107 Z" fill="#b8434f" stroke="var(--eye)" stroke-width="3" stroke-linejoin="round"/>
+                <ellipse cx="100" cy="117" rx="5" ry="3.5" fill="#f28c96"/>
+              </g>
+              <!-- paws -->
+              <ellipse cx="74" cy="172" rx="15" ry="9" fill="var(--cream)" stroke="var(--fur-dark)" stroke-width="2"/>
+              <ellipse cx="126" cy="172" rx="15" ry="9" fill="var(--cream)" stroke="var(--fur-dark)" stroke-width="2"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  const stage = document.getElementById('stage');
+  const dog = document.getElementById('dog');
+  const hopEl = dog.querySelector('.hop');
+  const squishEl = dog.querySelector('.squish');
+  const countEl = document.getElementById('n');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const WORDS = ['汪！', '嘿嘿', '好软~', '呜…', '再捏！', '嗷呜', '痒痒', '软乎乎'];
+  const PAW = '<svg viewBox="0 0 20 20"><ellipse cx="10" cy="13" rx="5" ry="4.2"/><circle cx="4.5" cy="7.5" r="2.2"/><circle cx="8.3" cy="4.6" r="2.2"/><circle cx="12.2" cy="4.6" r="2.2"/><circle cx="15.8" cy="7.5" r="2.2"/></svg>';
+
+  let W = 0, H = 0, dw = 0, dh = 0;
+  const s = { x: 0, y: 0, tx: 0, ty: 0, phase: 0, travelled: 0, sy: 1, vy: 0, pressing: false, dragging: false };
+  let count = 0;
+  try { count = parseInt(localStorage.getItem('shiba-squish') || '0', 10) || 0; } catch (e) {}
+  countEl.textContent = count;
+
+  function measure() {
+    const r = stage.getBoundingClientRect();
+    W = r.width; H = r.height; dw = dog.offsetWidth; dh = dog.offsetHeight;
+  }
+  function clamp(x, y) {
+    return [Math.min(Math.max(x, dw / 2 + 4), W - dw / 2 - 4), Math.min(Math.max(y, dh + 4), H - 12)];
+  }
+  measure();
+  [s.x, s.y] = clamp(W / 2, H * 0.62);
+  s.tx = s.x; s.ty = s.y;
+  addEventListener('resize', () => { measure(); [s.x, s.y] = clamp(s.x, s.y); [s.tx, s.ty] = clamp(s.tx, s.ty); });
+
+  function local(e) { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+
+  function spawn(cls, html, x, y, extra) {
+    const el = document.createElement('div');
+    el.className = cls; el.innerHTML = html;
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    if (extra) extra(el);
+    stage.insertBefore(el, dog);
+    el.addEventListener('animationend', () => el.remove());
+    return el;
+  }
+
+  function goTo(x, y) {
+    [s.tx, s.ty] = clamp(x, y);
+    spawn('target', '', s.tx, s.ty);
+    if (Math.abs(s.tx - s.x) > 3) dog.classList.toggle('left', s.tx < s.x);
+  }
+
+  function squish() {
+    count++; countEl.textContent = count;
+    try { localStorage.setItem('shiba-squish', String(count)); } catch (e) {}
+    s.pressing = true;
+    dog.classList.add('pressed', 'happy');
+    spawn('bubble', WORDS[Math.floor(Math.random() * WORDS.length)], s.x, s.y - dh * 0.85);
+    for (let i = 0; i < 3; i++) {
+      spawn('heart', '♥', s.x - 8 + (Math.random() - .5) * dw * .6, s.y - dh * .6,
+        el => { el.style.setProperty('--dx', ((Math.random() - .5) * 60) + 'px'); el.style.animationDelay = (i * 0.08) + 's'; });
+    }
+  }
+  function release() {
+    if (!s.pressing) return;
+    s.pressing = false;
+    dog.classList.remove('pressed');
+    s.vy += 3.5; // boing
+    setTimeout(() => dog.classList.remove('happy'), 1200);
+  }
+
+  // pointer handling
+  let down = null;
+  stage.addEventListener('pointerdown', e => {
+    const onDog = dog.contains(e.target);
+    if (!onDog) { const [x, y] = local(e); goTo(x, y); return; }
+    e.preventDefault();
+    dog.setPointerCapture(e.pointerId);
+    const [x, y] = local(e);
+    down = { id: e.pointerId, x, y, ox: s.x - x, oy: s.y - y };
+    squish();
+  });
+  dog.addEventListener('pointermove', e => {
+    if (!down || e.pointerId !== down.id) return;
+    const [x, y] = local(e);
+    if (!s.dragging && Math.hypot(x - down.x, y - down.y) > 8) {
+      s.dragging = true; dog.classList.add('dragging');
+      s.pressing = false; dog.classList.remove('pressed');
+    }
+    if (s.dragging) {
+      const [cx, cy] = clamp(x + down.ox, y + down.oy);
+      if (Math.abs(cx - s.x) > 1.5) dog.classList.toggle('left', cx < s.x);
+      s.x = s.tx = cx; s.y = s.ty = cy;
+    }
+  });
+  function end(e) {
+    if (!down || e.pointerId !== down.id) return;
+    if (s.dragging) { s.dragging = false; dog.classList.remove('dragging'); s.vy -= 4; setTimeout(() => dog.classList.remove('happy'), 600); }
+    release();
+    down = null;
+  }
+  dog.addEventListener('pointerup', end);
+  dog.addEventListener('pointercancel', end);
+
+  // keyboard
+  dog.addEventListener('keydown', e => {
+    if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); squish(); }
+    const step = 60, m = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+    if (m) { e.preventDefault(); goTo(s.tx + m[0], s.ty + m[1]); }
+  });
+  dog.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') release(); });
+
+  // blink now and then
+  (function blink() {
+    setTimeout(() => { dog.classList.add('blink'); setTimeout(() => { dog.classList.remove('blink'); blink(); }, 130); }, 1800 + Math.random() * 3000);
+  })();
+
+  // main loop
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    let hop = 0;
+    const dx = s.tx - s.x, dy = s.ty - s.y, dist = Math.hypot(dx, dy);
+    if (!s.dragging && dist > 1.5) {
+      const step = Math.min(dist, 280 * dt);
+      s.x += dx / dist * step; s.y += dy / dist * step;
+      s.phase += dt * 15; s.travelled += step;
+      hop = reduce ? 0 : Math.abs(Math.sin(s.phase)) * 16;
+      if (s.travelled > 26) {
+        s.travelled = 0;
+        const side = (Math.floor(s.phase / Math.PI) % 2 ? 1 : -1) * dw * 0.14;
+        const ang = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+        spawn('print', PAW, s.x + side * Math.cos(Math.atan2(dy, dx) + Math.PI / 2), s.y - 2 + side * Math.sin(Math.atan2(dy, dx) + Math.PI / 2),
+          el => { el.style.transform = `rotate(${ang}deg)`; });
+      }
+      if (Math.hypot(s.tx - s.x, s.ty - s.y) <= 1.5) { s.phase = 0; s.vy -= 2.5; }
+    } else if (s.dragging) {
+      hop = 18;
+    }
+
+    // jelly spring on vertical scale
+    const target = s.pressing ? 0.68 : (s.dragging ? 1.12 : 1);
+    s.vy += ((target - s.sy) * 420 - s.vy * 13) * dt;
+    s.sy += s.vy * dt;
+    const sy = Math.max(0.5, Math.min(1.4, s.sy));
+    const sx = 1 + (1 - sy) * 0.85;
+
+    dog.style.transform = `translate(${s.x - dw / 2}px, ${s.y - dh}px)`;
+    dog.style.zIndex = String(Math.round(s.y));
+    hopEl.style.transform = `translateY(${-hop}px)`;
+    squishEl.style.transform = `scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
